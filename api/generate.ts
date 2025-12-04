@@ -2,8 +2,9 @@ import { GoogleGenAI } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-const TRANSLATOR_MODEL = 'gemini-2.0-flash-lite-preview-02-05';
-const PROOFREADER_MODEL = 'gemini-2.0-pro-exp-02-11';
+const TRANSLATOR_MODEL = 'gemini-2.5-flash-lite';
+// Proofreader and context inference use the capable Pro model for high-quality text manipulation and context inference
+const PROOFREADER_MODEL = 'gemini-2.5-pro';
 
 // Re-defined here to avoid relative import issues in serverless environment
 const TextPurpose = {

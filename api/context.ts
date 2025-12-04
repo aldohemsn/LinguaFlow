@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-const PROOFREADER_MODEL = 'gemini-2.0-pro-exp-02-11';
+const PROOFREADER_MODEL = 'gemini-3-pro-preview';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
