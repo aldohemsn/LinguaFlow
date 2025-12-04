@@ -3,7 +3,7 @@ import Header from './components/Header';
 import ModeSelector from './components/ModeSelector';
 import TranslationArea from './components/TranslationArea';
 import ContextPanel from './components/ContextPanel';
-import { TranslationMode } from './types';
+import { TranslationMode, TextPurpose } from './types';
 import { generateTranslation } from './services/geminiService';
 import { Info, Users } from 'lucide-react';
 
@@ -24,6 +24,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [targetAudience, setTargetAudience] = useState('');
   const [context, setContext] = useState('');
+  const [textPurpose, setTextPurpose] = useState<TextPurpose>(TextPurpose.INFORMATIVE);
   
   // Store the last input text to re-trigger translation on mode switch if needed
   const [lastInput, setLastInput] = useState('');
@@ -35,7 +36,8 @@ const App: React.FC = () => {
     text: string, 
     currentMode: TranslationMode, 
     currentAudience: string, 
-    currentContext: string
+    currentContext: string,
+    currentPurpose: TextPurpose
   ) => {
     setLastInput(text);
     if (!text.trim()) {
@@ -47,7 +49,7 @@ const App: React.FC = () => {
     setError(null);
 
     try {
-      const result = await generateTranslation(text, currentMode, currentAudience, currentContext);
+      const result = await generateTranslation(text, currentMode, currentAudience, currentContext, currentPurpose);
       setTranslatedText(result);
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred");
@@ -58,8 +60,8 @@ const App: React.FC = () => {
 
   // Wrapper for TranslationArea which only passes text
   const onTranslateText = useCallback((text: string) => {
-    handleTranslate(text, mode, targetAudience, context);
-  }, [handleTranslate, mode, targetAudience, context]);
+    handleTranslate(text, mode, targetAudience, context, textPurpose);
+  }, [handleTranslate, mode, targetAudience, context, textPurpose]);
 
   const handleModeChange = (newMode: TranslationMode) => {
     if (newMode === mode) return;
@@ -68,15 +70,15 @@ const App: React.FC = () => {
     // If there is text, re-translate automatically with the new mode
     if (lastInput.trim()) {
         setTranslatedText(''); // Clear previous result visually
-        handleTranslate(lastInput, newMode, targetAudience, context);
+        handleTranslate(lastInput, newMode, targetAudience, context, textPurpose);
     }
   };
 
-  const triggerDebouncedTranslation = (newText: string, newMode: TranslationMode, newAudience: string, newContext: string) => {
+  const triggerDebouncedTranslation = (newText: string, newMode: TranslationMode, newAudience: string, newContext: string, newPurpose: TextPurpose) => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
       if (newText.trim()) {
         debounceRef.current = setTimeout(() => {
-            handleTranslate(newText, newMode, newAudience, newContext);
+            handleTranslate(newText, newMode, newAudience, newContext, newPurpose);
         }, 1000);
       }
   };
@@ -84,12 +86,22 @@ const App: React.FC = () => {
   const handleAudienceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newAudience = e.target.value;
     setTargetAudience(newAudience);
-    triggerDebouncedTranslation(lastInput, mode, newAudience, context);
+    triggerDebouncedTranslation(lastInput, mode, newAudience, context, textPurpose);
   };
 
   const handleContextChange = (newContext: string) => {
     setContext(newContext);
-    triggerDebouncedTranslation(lastInput, mode, targetAudience, newContext);
+    triggerDebouncedTranslation(lastInput, mode, targetAudience, newContext, textPurpose);
+  };
+  
+  const handlePurposeChange = (newPurpose: TextPurpose) => {
+    setTextPurpose(newPurpose);
+    // Determine if we should trigger immediately or debounce. 
+    // Usually clicking a button is intentional, so immediate is better, but consistency with other inputs?
+    // Let's trigger immediately if we have text.
+    if (lastInput.trim()) {
+      handleTranslate(lastInput, mode, targetAudience, context, newPurpose);
+    }
   };
 
   const applyAudienceSuggestion = (suggestion: string) => {
@@ -98,7 +110,7 @@ const App: React.FC = () => {
     
     // Apply immediately without debounce for better UX on click
     if (lastInput.trim()) {
-      handleTranslate(lastInput, mode, suggestion, context);
+      handleTranslate(lastInput, mode, suggestion, context, textPurpose);
     }
   };
 
@@ -150,7 +162,9 @@ const App: React.FC = () => {
                  {/* Context Panel */}
                  <ContextPanel 
                     context={context} 
-                    onContextChange={handleContextChange} 
+                    onContextChange={handleContextChange}
+                    purpose={textPurpose}
+                    onPurposeChange={handlePurposeChange}
                     disabled={isLoading}
                  />
 

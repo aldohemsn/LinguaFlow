@@ -1,15 +1,24 @@
 import React, { useRef, useState } from 'react';
-import { FileText, Upload, Loader2, Sparkles, X } from 'lucide-react';
+import { FileText, Upload, Loader2, Sparkles, X, Target } from 'lucide-react';
 import { extractTextFromFile } from '../utils/fileUtils';
 import { inferContext } from '../services/geminiService';
+import { TextPurpose, TEXT_PURPOSE_DETAILS } from '../types';
 
 interface ContextPanelProps {
   context: string;
   onContextChange: (context: string) => void;
+  purpose: TextPurpose;
+  onPurposeChange: (purpose: TextPurpose) => void;
   disabled?: boolean;
 }
 
-const ContextPanel: React.FC<ContextPanelProps> = ({ context, onContextChange, disabled }) => {
+const ContextPanel: React.FC<ContextPanelProps> = ({ 
+  context, 
+  onContextChange, 
+  purpose,
+  onPurposeChange,
+  disabled 
+}) => {
   const [isInferring, setIsInferring] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -45,6 +54,36 @@ const ContextPanel: React.FC<ContextPanelProps> = ({ context, onContextChange, d
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 mb-6 transition-all">
+      
+      {/* Purpose Selector */}
+      <div className="mb-5">
+        <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2 mb-2">
+          <Target className="w-4 h-4 text-rose-500" />
+          Text Purpose (Reiss's Typology)
+        </h3>
+        <div className="grid grid-cols-3 gap-2">
+          {Object.values(TextPurpose).map((p) => (
+            <button
+              key={p}
+              onClick={() => onPurposeChange(p)}
+              disabled={disabled}
+              className={`flex flex-col items-center justify-center p-2 rounded-lg border text-xs transition-all ${
+                purpose === p
+                  ? 'bg-rose-50 border-rose-200 text-rose-700 font-medium ring-1 ring-rose-200'
+                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
+              } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+              title={TEXT_PURPOSE_DETAILS[p].description}
+            >
+              <span className="text-lg mb-1">{TEXT_PURPOSE_DETAILS[p].icon}</span>
+              <span>{TEXT_PURPOSE_DETAILS[p].label}</span>
+            </button>
+          ))}
+        </div>
+        <p className="text-[10px] text-slate-400 mt-1.5 px-1">
+          {TEXT_PURPOSE_DETAILS[purpose].description}
+        </p>
+      </div>
+
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
           <FileText className="w-4 h-4 text-indigo-500" />
