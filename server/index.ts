@@ -205,7 +205,7 @@ app.post('/api/context', async (req, res) => {
 
 
 // Catch-all route to serve the React app for any other request (SPA support)
-app.get('*', (req, res) => {
+app.get(/.*/, (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
