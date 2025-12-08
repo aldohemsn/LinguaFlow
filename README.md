@@ -24,9 +24,13 @@ In **Proofreader Mode**, you don't just get "better English"—you get English t
 *   **Passphrase Authentication:** Protect your deployment with a simple, secure passphrase mechanism.
 *   **Secure API Handling:** All AI requests are proxied through a secure Express backend.
 
+### 5. Offline Support & GFW-Friendly Access
+*   **Progressive Web App (PWA):** Utilizes Service Workers to cache essential assets, enabling fast loading and reliable offline access.
+*   **Self-Contained Resources:** All external dependencies (Google Fonts, Tailwind CDN) have been localized and bundled, ensuring the application functions stably even in regions with restricted network access (e.g., China's Great Firewall).
+
 ## 🛠️ Tech Stack
 
-*   **Frontend:** [React 19](https://react.dev/) + TypeScript + [Vite](https://vitejs.dev/)
+*   **Frontend:** [React 19](https://react.dev/) + TypeScript + [Vite](https://vitejs.dev/) + PWA (Progressive Web App)
 *   **Backend:** Node.js + [Express](https://expressjs.com/)
 *   **AI:** [Google GenAI SDK](https://www.npmjs.com/package/@google/genai)
 *   **Styling:** [Tailwind CSS](https://tailwindcss.com/) + [Lucide React](https://lucide.dev/)
