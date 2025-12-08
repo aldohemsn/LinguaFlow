@@ -1,12 +1,34 @@
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+dotenv.config();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(cors());
+app.use(express.json({ limit: '10mb' })); // Increase limit for large text
+
+// Serve static files from the 'dist' directory (Vite build output)
+// In production, 'dist' will be adjacent to 'server' folder after build adjustment or
+// we can point to the project root's dist if running from root.
+// Let's assume standard deployment: server.js is run, dist is ready.
+const distPath = path.resolve(__dirname, '../dist');
+app.use(express.static(distPath));
+
+// --- Gemini API Setup ---
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const TRANSLATOR_MODEL = 'gemini-2.5-flash-lite';
-// Proofreader and context inference use the capable Pro model for high-quality text manipulation and context inference
 const PROOFREADER_MODEL = 'gemini-2.5-pro';
 
-// Re-defined here to avoid relative import issues in serverless environment
+// --- Shared Constants ---
 const TextPurpose = {
   INFORMATIVE: 'INFORMATIVE',
   EXPRESSIVE: 'EXPRESSIVE',
@@ -19,7 +41,8 @@ const TranslationMode = {
   POLISH: 'POLISH'
 };
 
-const getPurposeInstruction = (purpose) => {
+// --- Helper Functions ---
+const getPurposeInstruction = (purpose: string) => {
   switch (purpose) {
     case TextPurpose.INFORMATIVE:
       return "PRIMARY GOAL: ACCURACY & CLARITY. This is an 'Informative Text' (Reiss). Focus on conveying facts, knowledge, and information accurately. Maintain a neutral, objective, and clear tone.";
@@ -32,7 +55,7 @@ const getPurposeInstruction = (purpose) => {
   }
 };
 
-const getTranslatorSystemPrompt = (context, purpose) => `
+const getTranslatorSystemPrompt = (context: string, purpose: string) => `
 You are a highly efficient bilingual translator (English <-> Chinese). 
 Your task is to detect the source language and provide a fast, accurate, and literal translation into the target language.
 - If Source is Chinese -> Target is English.
@@ -50,7 +73,7 @@ Preserve the original meaning strictly.
 Do not add explanations or notes. Just output the translated text.
 `;
 
-const getProofreaderSystemPrompt = (targetAudience, context, purpose) => {
+const getProofreaderSystemPrompt = (targetAudience: string, context: string, purpose: string) => {
   const audienceInstruction = targetAudience 
     ? `ROLE: You are a representative of the target audience: "${targetAudience}". 
 You are NOT just a translator or editor; you are a member of this audience group.
@@ -82,15 +105,16 @@ Do not add explanations or notes. Just output the refined text.
 `;
 };
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method Not Allowed' });
-  }
 
+// --- API Routes ---
+
+// POST /api/generate
+app.post('/api/generate', async (req, res) => {
   const { text, mode, targetAudience, context, purpose } = req.body;
 
   if (!text) {
-    return res.status(400).json({ message: 'Missing text' });
+    res.status(400).json({ message: 'Missing text' });
+    return;
   }
 
   try {
@@ -111,13 +135,15 @@ export default async function handler(req, res) {
 
     // If mode is TRANSLATOR, we are done
     if (mode === TranslationMode.TRANSLATOR) {
-        return res.status(200).json({ result: draftText });
+        res.status(200).json({ result: draftText });
+        return;
     }
 
     // Step 2: Proofreading (Pro) - For PROOFREADER and POLISH modes
     if (mode === TranslationMode.PROOFREADER || mode === TranslationMode.POLISH) {
         if (!draftText.trim()) {
-            return res.status(200).json({ result: "" });
+            res.status(200).json({ result: "" });
+            return;
         }
 
         const proofreaderResponse = await ai.models.generateContent({
@@ -131,13 +157,58 @@ Please rewrite this to be natural and idiomatic.`,
             }
         });
         
-        return res.status(200).json({ result: proofreaderResponse.text || "" });
+        res.status(200).json({ result: proofreaderResponse.text || "" });
+        return;
     }
 
-    return res.status(400).json({ message: 'Invalid mode' });
+    res.status(400).json({ message: 'Invalid mode' });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini API Error:", error);
-    return res.status(500).json({ message: 'Failed to generate translation', error: error.message });
+    res.status(500).json({ message: 'Failed to generate translation', error: error.message });
   }
-}
+});
+
+// POST /api/context
+app.post('/api/context', async (req, res) => {
+  const { fullText } = req.body;
+
+  if (!fullText) {
+     // Allow empty context if text is empty
+    res.status(200).json({ context: "" });
+    return;
+  }
+
+  const textSample = fullText.slice(0, 50000);
+
+  try {
+    const response = await ai.models.generateContent({
+        model: PROOFREADER_MODEL,
+        contents: `Analyze the following text (which is a full document or a large excerpt). 
+        Identify the core topic, the document type (e.g., technical manual, novel, legal contract), the intended audience, and the general tone. 
+        Summarize this "Translation Context" in one concise paragraph (under 100 words) to help a translator understand the background.
+        
+        Text:
+        "${textSample}"`,
+        config: {
+            temperature: 0.5,
+        }
+    });
+
+    res.status(200).json({ context: response.text || "" });
+
+  } catch (error: any) {
+    console.error("Context Inference Error:", error);
+    res.status(500).json({ message: 'Failed to infer context', error: error.message });
+  }
+});
+
+
+// Catch-all route to serve the React app for any other request (SPA support)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(distPath, 'index.html'));
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
