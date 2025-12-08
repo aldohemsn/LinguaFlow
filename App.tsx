@@ -134,8 +134,8 @@ const App: React.FC = () => {
              </h2>
              <p className="text-slate-500 text-sm leading-relaxed">
                {mode === TranslationMode.TRANSLATOR 
-                 ? 'Powered by Gemini Flash Lite. Delivers fast, accurate, and literal Chinese-to-English translation.' 
-                 : 'Powered by Gemini Pro. Polishes the literal draft into native-level English.'}
+                 ? 'Powered by Gemini Flash Lite. Delivers fast, accurate, and literal bi-directional translation (EN↔ZH).' 
+                 : 'Powered by Gemini Pro. Polishes the draft into native-level target language.'}
              </p>
           </div>
           <ModeSelector 
@@ -207,19 +207,6 @@ const App: React.FC = () => {
                     </div>
                 </div>
                 )}
-            </div>
-        </div>
-
-        {/* Info / Tips */}
-        <div className="mt-8 bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3 text-sm text-blue-700">
-            <Info className="w-5 h-5 shrink-0 text-blue-500 mt-0.5" />
-            <div>
-                <p className="font-semibold mb-1">Tip:</p>
-                <p>
-                    {mode === TranslationMode.TRANSLATOR 
-                        ? 'Use "Fast Translator" for quick understanding. Upload the full document in the Context panel to improve accuracy for specific terms.'
-                        : 'Use "Pro Proofreader" for publishing. The AI will act as a representative of your selected "Target Audience" to ensure the text resonates perfectly.'}
-                </p>
             </div>
         </div>
 

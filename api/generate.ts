@@ -32,8 +32,11 @@ const getPurposeInstruction = (purpose) => {
 };
 
 const getTranslatorSystemPrompt = (context, purpose) => `
-You are a highly efficient Chinese-to-English translator. 
-Your task is to provide a fast, accurate, and literal translation of the source text.
+You are a highly efficient bilingual translator (English <-> Chinese). 
+Your task is to detect the source language and provide a fast, accurate, and literal translation into the target language.
+- If Source is Chinese -> Target is English.
+- If Source is English -> Target is Simplified Chinese.
+
 ${purpose ? `
 [TEXT PURPOSE]
 ${getPurposeInstruction(purpose)}
@@ -43,7 +46,7 @@ ${context ? `
 ${context}
 IMPORTANT: Use this background information strictly to resolve ambiguities in the source text and ensure terminological accuracy.` : ''}
 Preserve the original meaning strictly. 
-Do not add explanations or notes. Just output the English text.
+Do not add explanations or notes. Just output the translated text.
 `;
 
 const getProofreaderSystemPrompt = (targetAudience, context, purpose) => {
@@ -52,7 +55,7 @@ const getProofreaderSystemPrompt = (targetAudience, context, purpose) => {
 You are NOT just a translator or editor; you are a member of this audience group.
 You are to ensure the text resonates perfectly with you and your peers.
 Adopt the exact expectations, vocabulary, reading level, and stylistic preferences typical of "${targetAudience}".` 
-    : "ROLE: You are a world-class English editor acting on behalf of general professional English readers.";
+    : "ROLE: You are a world-class editor acting on behalf of general professional readers.";
 
   return `
 ${audienceInstruction}
@@ -64,13 +67,17 @@ ${context ? `
 [CONTEXT FOR TONE & STYLE]
 ${context}
 IMPORTANT: Use this background information to determine the appropriate register, atmosphere, and stylistic nuances.` : ''}
-Your task is to rewrite the provided English draft into professional, native-sounding English.
-The input you receive is a literal translation from Chinese.
-You must completely decouple yourself from any underlying Chinese syntax or structure that might remain in the draft.
-Focus exclusively on English flow, tone, and idiomatic expression suitable for your role and the text's purpose.
-Avoid "Chinglish" at all costs.
+Your task is to rewrite the provided draft translation into professional, native-sounding text in the target language.
+The input is a draft translation.
+1. Detect the language of the input draft.
+2. If English: Refine it to be native-level English.
+3. If Chinese: Refine it to be native-level Simplified Chinese.
+
+You must completely decouple yourself from any underlying syntax or structure of the original source language that might remain in the draft.
+Focus exclusively on flow, tone, and idiomatic expression suitable for your role and the text's purpose.
+Avoid "translationese" at all costs.
 If the text is informal, keep it natural. If it's formal, make it polished.
-Do not add explanations or notes. Just output the refined English text.
+Do not add explanations or notes. Just output the refined text.
 `;
 };
 
