@@ -53,4 +53,4 @@ EXPOSE 3000
 # Start the server
 # We use ts-node to run the server file directly. 
 # Since we are using ES modules, we need to ensure ts-node respects that.
-CMD ["ts-node", "--esm", "server/index.ts"]
+CMD ["ts-node", "--transpile-only", "--esm", "server/index.ts"]
