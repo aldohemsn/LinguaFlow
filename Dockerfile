@@ -5,11 +5,8 @@ WORKDIR /app
 # Copy package files
 COPY package.json package-lock.json ./
 
-# Install dependencies
+# Install dependencies (including devDependencies for tsx)
 RUN npm ci
-
-# Install tsx globally for running the server
-RUN npm install -g tsx
 
 # Copy source code
 COPY . .
@@ -20,5 +17,5 @@ RUN npm run build
 # Expose port
 EXPOSE 8080
 
-# Start the server
-CMD ["tsx", "server/index.ts"]
+# Start the server using local tsx
+CMD ["npx", "tsx", "server/index.ts"]

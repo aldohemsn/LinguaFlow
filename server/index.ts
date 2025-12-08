@@ -10,17 +10,17 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+console.log("Starting LinguaFlow server...");
+
 const app = express();
 const PORT = process.env.PORT || 8080;
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // Increase limit for large text
 
-// Serve static files from the 'dist' directory (Vite build output)
-// In production, 'dist' will be adjacent to 'server' folder after build adjustment or
-// we can point to the project root's dist if running from root.
-// Let's assume standard deployment: server.js is run, dist is ready.
+// Serve static files from the 'dist' directory
 const distPath = path.resolve(__dirname, '../dist');
+console.log(`Serving static files from: ${distPath}`);
 app.use(express.static(distPath));
 
 // --- Gemini API Setup ---
