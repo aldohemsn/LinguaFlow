@@ -1,6 +1,6 @@
-# LinguaFlow Translate
+# LinguaFlow
 
-LinguaFlow Translate is a sophisticated, dual-mode Chinese-to-English translation tool powered by Google's latest Gemini AI models. It bridges the gap between raw literal understanding and professional, audience-tailored localization.
+LinguaFlow is a sophisticated, dual-mode Chinese-to-English translation tool powered by Google's latest Gemini AI models. It bridges the gap between raw literal understanding and professional, audience-tailored localization.
 
 ![App Screenshot Placeholder](https://via.placeholder.com/800x400?text=LinguaFlow+Translate+Interface)
 
@@ -14,18 +14,22 @@ LinguaFlow Translate is a sophisticated, dual-mode Chinese-to-English translatio
 In **Proofreader Mode**, you don't just get "better English"—you get English tailored to your specific reader.
 *   **Target Audience Personas:** Define who will read your text (e.g., "Investors", "Legal Professionals", "Gen Z").
 *   **Role-Playing AI:** The AI acts as a representative of that audience to ensure the tone, vocabulary, and style resonate perfectly.
+*   **Iterative Refinement:** Click "Polish" repeatedly to generate variations or further refine the text.
 
 ### 3. Contextual Awareness
 *   **Context Panel:** Provide background information (or let the AI infer it from uploaded documents) to resolve ambiguities and set the correct atmosphere.
 *   **Smart Inference:** Capable of analyzing large text samples to automatically determine the document type, tone, and intended audience.
 
+### 4. Security & Access Control
+*   **Passphrase Authentication:** Protect your deployment with a simple, secure passphrase mechanism.
+*   **Secure API Handling:** All AI requests are proxied through a secure Express backend.
+
 ## 🛠️ Tech Stack
 
-*   **Frontend:** [React 19](https://react.dev/) + TypeScript
-*   **Build Tool:** [Vite](https://vitejs.dev/)
-*   **Styling:** [Tailwind CSS](https://tailwindcss.com/)
-*   **AI Integration:** [Google GenAI SDK](https://www.npmjs.com/package/@google/genai)
-*   **Icons:** [Lucide React](https://lucide.dev/)
+*   **Frontend:** [React 19](https://react.dev/) + TypeScript + [Vite](https://vitejs.dev/)
+*   **Backend:** Node.js + [Express](https://expressjs.com/)
+*   **AI:** [Google GenAI SDK](https://www.npmjs.com/package/@google/genai)
+*   **Styling:** [Tailwind CSS](https://tailwindcss.com/) + [Lucide React](https://lucide.dev/)
 
 ## 🚀 Getting Started
 
@@ -47,28 +51,36 @@ In **Proofreader Mode**, you don't just get "better English"—you get English t
     ```
 
 3.  **Configure Environment Variables:**
-    Create a `.env` or `.env.local` file in the root directory and add your Gemini API Key:
+    Create a `.env` file in the root directory:
     ```env
+    PORT=8080
     GEMINI_API_KEY=your_actual_api_key_here
+    PASSPHRASE=your_secure_passphrase_here
     ```
 
 ### Running the Application
 
-Start the development server:
-
+**Development:**
 ```bash
 npm run dev
 ```
 
-Open your browser and visit `http://localhost:3000`.
+**Production:**
+1.  Build the frontend:
+    ```bash
+    npm run build
+    ```
+2.  Start the server:
+    ```bash
+    npm start
+    ```
 
 ## 📖 Usage Guide
 
-1.  **Select Mode:** Toggle between "Translator" (for speed/literal meaning) and "Proofreader" (for publishing).
-2.  **Input Text:** Type or paste your Chinese text into the input area.
-3.  **Add Context (Optional):** Use the sidebar to add background info or specify a target audience (Proofreader mode only).
-4.  **Translate:** Click the translate button.
-5.  **Review:** See the result instantly. Switching modes will automatically re-process your last input.
+1.  **Login:** Enter your passphrase to unlock the interface.
+2.  **Translate:** Type your Chinese text and click "Translate" for a fast, literal draft.
+3.  **Refine:** Switch to "Polish" mode, set a Target Audience (e.g., "Academic"), and click "Polish" to transform the text into professional English.
+4.  **Context:** Use the sidebar to upload a document for context analysis if your text is part of a larger work.
 
 ## 📄 License
 
