@@ -1,6 +1,7 @@
 export enum TranslationMode {
   TRANSLATOR = 'TRANSLATOR',
-  PROOFREADER = 'PROOFREADER'
+  PROOFREADER = 'PROOFREADER',
+  POLISH = 'POLISH'
 }
 
 export enum TextPurpose {

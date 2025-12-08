@@ -15,7 +15,8 @@ const TextPurpose = {
 
 const TranslationMode = {
   TRANSLATOR: 'TRANSLATOR',
-  PROOFREADER: 'PROOFREADER'
+  PROOFREADER: 'PROOFREADER',
+  POLISH: 'POLISH'
 };
 
 const getPurposeInstruction = (purpose) => {
@@ -93,25 +94,28 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Step 1: Generate Literal Translation (Flash Lite)
-    const translatorResponse = await ai.models.generateContent({
-      model: TRANSLATOR_MODEL,
-      contents: text,
-      config: {
-        systemInstruction: getTranslatorSystemPrompt(context, purpose),
-        temperature: 0.3,
-      }
-    });
+    let draftText = text;
 
-    const draftText = translatorResponse.text || "";
+    // Step 1: Generate Literal Translation (Flash Lite) - Only if NOT in POLISH mode
+    if (mode !== TranslationMode.POLISH) {
+        const translatorResponse = await ai.models.generateContent({
+        model: TRANSLATOR_MODEL,
+        contents: text,
+        config: {
+            systemInstruction: getTranslatorSystemPrompt(context, purpose),
+            temperature: 0.3,
+        }
+        });
+        draftText = translatorResponse.text || "";
+    }
 
     // If mode is TRANSLATOR, we are done
     if (mode === TranslationMode.TRANSLATOR) {
         return res.status(200).json({ result: draftText });
     }
 
-    // Step 2: Proofreading (Pro)
-    if (mode === TranslationMode.PROOFREADER) {
+    // Step 2: Proofreading (Pro) - For PROOFREADER and POLISH modes
+    if (mode === TranslationMode.PROOFREADER || mode === TranslationMode.POLISH) {
         if (!draftText.trim()) {
             return res.status(200).json({ result: "" });
         }
