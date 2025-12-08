@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import Header from './components/Header';
 import TranslationArea from './components/TranslationArea';
 import ContextPanel from './components/ContextPanel';
+import PassphraseModal from './components/PassphraseModal';
 import { TranslationMode, TextPurpose } from './types';
 import { generateTranslation } from './services/geminiService';
 import { Users } from 'lucide-react';
@@ -18,6 +19,7 @@ const SUGGESTED_AUDIENCES = [
 
 const App: React.FC = () => {
   // State initialization: Try to load from localStorage, otherwise use default
+  const [passphrase, setPassphrase] = useState(() => localStorage.getItem('linguaFlow_passphrase') || '');
   const [sourceText, setSourceText] = useState(() => localStorage.getItem('linguaFlow_sourceText') || '');
   const [targetText, setTargetText] = useState(() => localStorage.getItem('linguaFlow_targetText') || '');
   const [targetAudience, setTargetAudience] = useState(() => localStorage.getItem('linguaFlow_targetAudience') || '');
@@ -31,6 +33,14 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Effects to save state to localStorage whenever it changes
+  useEffect(() => {
+    if (passphrase) {
+      localStorage.setItem('linguaFlow_passphrase', passphrase);
+    } else {
+      localStorage.removeItem('linguaFlow_passphrase');
+    }
+  }, [passphrase]);
+
   useEffect(() => {
     localStorage.setItem('linguaFlow_sourceText', sourceText);
   }, [sourceText]);
@@ -66,7 +76,8 @@ const App: React.FC = () => {
         TranslationMode.TRANSLATOR, 
         targetAudience, 
         context, 
-        textPurpose
+        textPurpose,
+        passphrase
       );
       setTargetText(result);
     } catch (err: any) {
@@ -74,7 +85,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [sourceText, targetAudience, context, textPurpose]);
+  }, [sourceText, targetAudience, context, textPurpose, passphrase]);
 
   // Action 2: Polish (Target -> Target)
   const handlePolishAction = useCallback(async () => {
@@ -90,7 +101,8 @@ const App: React.FC = () => {
         TranslationMode.POLISH, 
         targetAudience, 
         context, 
-        textPurpose
+        textPurpose,
+        passphrase
       );
       setTargetText(result);
     } catch (err: any) {
@@ -98,7 +110,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [targetText, targetAudience, context, textPurpose]);
+  }, [targetText, targetAudience, context, textPurpose, passphrase]);
 
   const handleClear = useCallback(() => {
     setSourceText('');
@@ -119,6 +131,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
+      {!passphrase && <PassphraseModal onSubmit={setPassphrase} />}
       <Header />
 
       <main className="flex-1 max-w-[1600px] mx-auto w-full px-4 sm:px-6 lg:px-8 py-6">
@@ -149,6 +162,7 @@ const App: React.FC = () => {
                     purpose={textPurpose}
                     onPurposeChange={setTextPurpose}
                     disabled={isLoading}
+                    passphrase={passphrase}
                  />
 
                  {/* Audience Input (Always visible now as it applies to Polishing) */}

@@ -10,6 +10,7 @@ interface ContextPanelProps {
   purpose: TextPurpose;
   onPurposeChange: (purpose: TextPurpose) => void;
   disabled?: boolean;
+  passphrase?: string;
 }
 
 const ContextPanel: React.FC<ContextPanelProps> = ({ 
@@ -17,7 +18,8 @@ const ContextPanel: React.FC<ContextPanelProps> = ({
   onContextChange, 
   purpose,
   onPurposeChange,
-  disabled 
+  disabled,
+  passphrase
 }) => {
   const [isInferring, setIsInferring] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -35,7 +37,7 @@ const ContextPanel: React.FC<ContextPanelProps> = ({
       const text = await extractTextFromFile(file);
       
       // 2. Infer context via Gemini
-      const inferredContext = await inferContext(text);
+      const inferredContext = await inferContext(text, passphrase);
       
       onContextChange(inferredContext);
     } catch (err: any) {

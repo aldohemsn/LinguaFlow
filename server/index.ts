@@ -23,6 +23,32 @@ const distPath = path.resolve(__dirname, '../dist');
 console.log(`Serving static files from: ${distPath}`);
 app.use(express.static(distPath));
 
+// --- Authentication Middleware ---
+const authMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const envPassphrase = process.env.PASSPHRASE;
+
+  if (!envPassphrase) {
+    console.warn("WARNING: PASSPHRASE environment variable not set. Authentication disabled.");
+    return next();
+  }
+
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    res.status(401).json({ message: 'Unauthorized: Missing or invalid Authorization header' });
+    return;
+  }
+
+  const token = authHeader.split(' ')[1];
+
+  if (token !== envPassphrase) {
+    res.status(401).json({ message: 'Unauthorized: Invalid passphrase' });
+    return;
+  }
+
+  next();
+};
+
 // --- Gemini API Setup ---
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const TRANSLATOR_MODEL = 'gemini-2.5-flash-lite';
@@ -109,7 +135,7 @@ Do not add explanations or notes. Just output the refined text.
 // --- API Routes ---
 
 // POST /api/generate
-app.post('/api/generate', async (req, res) => {
+app.post('/api/generate', authMiddleware, async (req, res) => {
   const { text, mode, targetAudience, context, purpose } = req.body;
 
   if (!text) {
@@ -170,7 +196,7 @@ Please rewrite this to be natural and idiomatic.`,
 });
 
 // POST /api/context
-app.post('/api/context', async (req, res) => {
+app.post('/api/context', authMiddleware, async (req, res) => {
   const { fullText } = req.body;
 
   if (!fullText) {
