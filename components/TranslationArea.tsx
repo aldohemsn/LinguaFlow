@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, Check, X, Volume2, Sparkles, ArrowRight, Loader2 } from 'lucide-react';
+import { Copy, Check, X, Volume2, Sparkles, ArrowRight, Loader2, Download } from 'lucide-react';
 import { TranslationMode } from '../types';
 
 interface TranslationAreaProps {
@@ -45,6 +45,19 @@ const TranslationArea: React.FC<TranslationAreaProps> = ({
     // Ideally, we'd pass the detected language prop.
     utterance.lang = 'en-US'; 
     window.speechSynthesis.speak(utterance);
+  };
+
+  const handleDownload = () => {
+    if (!targetText) return;
+    const blob = new Blob([targetText], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'translation.txt';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -120,6 +133,13 @@ const TranslationArea: React.FC<TranslationAreaProps> = ({
                         title="Copy text"
                     >
                         {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                    </button>
+                    <button
+                        onClick={handleDownload}
+                        className="p-1.5 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-700 transition-colors"
+                        title="Download as TXT"
+                    >
+                        <Download className="w-4 h-4" />
                     </button>
                  </>
              )}

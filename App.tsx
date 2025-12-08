@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import Header from './components/Header';
 import TranslationArea from './components/TranslationArea';
 import ContextPanel from './components/ContextPanel';
@@ -17,15 +17,40 @@ const SUGGESTED_AUDIENCES = [
 ];
 
 const App: React.FC = () => {
-  const [sourceText, setSourceText] = useState('');
-  const [targetText, setTargetText] = useState('');
+  // State initialization: Try to load from localStorage, otherwise use default
+  const [sourceText, setSourceText] = useState(() => localStorage.getItem('linguaFlow_sourceText') || '');
+  const [targetText, setTargetText] = useState(() => localStorage.getItem('linguaFlow_targetText') || '');
+  const [targetAudience, setTargetAudience] = useState(() => localStorage.getItem('linguaFlow_targetAudience') || '');
+  const [context, setContext] = useState(() => localStorage.getItem('linguaFlow_context') || '');
+  const [textPurpose, setTextPurpose] = useState<TextPurpose>(() => {
+    const savedPurpose = localStorage.getItem('linguaFlow_textPurpose');
+    return (savedPurpose as TextPurpose) || TextPurpose.INFORMATIVE;
+  });
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  const [targetAudience, setTargetAudience] = useState('');
-  const [context, setContext] = useState('');
-  const [textPurpose, setTextPurpose] = useState<TextPurpose>(TextPurpose.INFORMATIVE);
+
+  // Effects to save state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('linguaFlow_sourceText', sourceText);
+  }, [sourceText]);
+
+  useEffect(() => {
+    localStorage.setItem('linguaFlow_targetText', targetText);
+  }, [targetText]);
+
+  useEffect(() => {
+    localStorage.setItem('linguaFlow_targetAudience', targetAudience);
+  }, [targetAudience]);
+
+  useEffect(() => {
+    localStorage.setItem('linguaFlow_context', context);
+  }, [context]);
+
+  useEffect(() => {
+    localStorage.setItem('linguaFlow_textPurpose', textPurpose);
+  }, [textPurpose]);
+
 
   // Action 1: Translate (Source -> Target)
   const handleTranslateAction = useCallback(async () => {
@@ -78,7 +103,18 @@ const App: React.FC = () => {
   const handleClear = useCallback(() => {
     setSourceText('');
     setTargetText('');
+    setTargetAudience('');
+    setContext('');
+    setTextPurpose(TextPurpose.INFORMATIVE);
     setError(null);
+
+    // Clear localStorage as well
+    localStorage.removeItem('linguaFlow_sourceText');
+    localStorage.removeItem('linguaFlow_targetText');
+    localStorage.removeItem('linguaFlow_targetAudience');
+    localStorage.removeItem('linguaFlow_context');
+    localStorage.removeItem('linguaFlow_textPurpose');
+
   }, []);
 
   return (
