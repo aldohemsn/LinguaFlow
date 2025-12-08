@@ -1,7 +1,11 @@
 import React from 'react';
-import { Languages, Sparkles } from 'lucide-react';
+import { Languages, Sparkles, LogOut } from 'lucide-react';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  onLogout?: () => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ onLogout }) => {
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -25,6 +29,17 @@ const Header: React.FC = () => {
              <Sparkles className="w-4 h-4" />
              <span>Powered by Gemini</span>
            </a>
+           
+           {onLogout && (
+             <button
+               onClick={onLogout}
+               className="flex items-center space-x-1.5 px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
+               title="Log Out"
+             >
+               <LogOut className="w-4 h-4" />
+               <span className="hidden sm:inline">Log Out</span>
+             </button>
+           )}
         </div>
       </div>
     </header>

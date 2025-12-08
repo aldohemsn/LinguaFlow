@@ -124,10 +124,15 @@ const App: React.FC = () => {
 
   }, []);
 
+  const handleLogout = useCallback(() => {
+    setPassphrase('');
+    // storage is updated via the useEffect on [passphrase]
+  }, []);
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {!passphrase && <PassphraseModal onSubmit={setPassphrase} />}
-      <Header />
+      <Header onLogout={passphrase ? handleLogout : undefined} />
 
       <main className="flex-1 max-w-[1600px] mx-auto w-full px-4 sm:px-6 lg:px-8 py-6">
         
