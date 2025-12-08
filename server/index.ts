@@ -134,6 +134,11 @@ Do not add explanations or notes. Just output the refined text.
 
 // --- API Routes ---
 
+// POST /api/verify - Dedicated Auth Check
+app.post('/api/verify', authMiddleware, (req, res) => {
+  res.status(200).json({ valid: true });
+});
+
 // POST /api/generate
 app.post('/api/generate', authMiddleware, async (req, res) => {
   const { text, mode, targetAudience, context, purpose } = req.body;

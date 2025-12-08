@@ -5,6 +5,7 @@ import ContextPanel from './components/ContextPanel';
 import PassphraseModal from './components/PassphraseModal';
 import { TranslationMode, TextPurpose } from './types';
 import { generateTranslation } from './services/geminiService';
+import { getStoredPassphrase, setStoredPassphrase } from './services/authService';
 import { Users } from 'lucide-react';
 
 const SUGGESTED_AUDIENCES = [
@@ -19,7 +20,7 @@ const SUGGESTED_AUDIENCES = [
 
 const App: React.FC = () => {
   // State initialization: Try to load from localStorage, otherwise use default
-  const [passphrase, setPassphrase] = useState(() => localStorage.getItem('linguaFlow_passphrase') || '');
+  const [passphrase, setPassphrase] = useState(() => getStoredPassphrase());
   const [sourceText, setSourceText] = useState(() => localStorage.getItem('linguaFlow_sourceText') || '');
   const [targetText, setTargetText] = useState(() => localStorage.getItem('linguaFlow_targetText') || '');
   const [targetAudience, setTargetAudience] = useState(() => localStorage.getItem('linguaFlow_targetAudience') || '');
@@ -34,11 +35,7 @@ const App: React.FC = () => {
 
   // Effects to save state to localStorage whenever it changes
   useEffect(() => {
-    if (passphrase) {
-      localStorage.setItem('linguaFlow_passphrase', passphrase);
-    } else {
-      localStorage.removeItem('linguaFlow_passphrase');
-    }
+    setStoredPassphrase(passphrase);
   }, [passphrase]);
 
   useEffect(() => {
@@ -76,8 +73,7 @@ const App: React.FC = () => {
         TranslationMode.TRANSLATOR, 
         targetAudience, 
         context, 
-        textPurpose,
-        passphrase
+        textPurpose
       );
       setTargetText(result);
     } catch (err: any) {
@@ -85,7 +81,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [sourceText, targetAudience, context, textPurpose, passphrase]);
+  }, [sourceText, targetAudience, context, textPurpose]);
 
   // Action 2: Polish (Target -> Target)
   const handlePolishAction = useCallback(async () => {
@@ -101,8 +97,7 @@ const App: React.FC = () => {
         TranslationMode.POLISH, 
         targetAudience, 
         context, 
-        textPurpose,
-        passphrase
+        textPurpose
       );
       setTargetText(result);
     } catch (err: any) {
@@ -110,7 +105,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [targetText, targetAudience, context, textPurpose, passphrase]);
+  }, [targetText, targetAudience, context, textPurpose]);
 
   const handleClear = useCallback(() => {
     setSourceText('');
@@ -162,7 +157,6 @@ const App: React.FC = () => {
                     purpose={textPurpose}
                     onPurposeChange={setTextPurpose}
                     disabled={isLoading}
-                    passphrase={passphrase}
                  />
 
                  {/* Audience Input (Always visible now as it applies to Polishing) */}

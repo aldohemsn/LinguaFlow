@@ -1,23 +1,16 @@
 import { TranslationMode, TextPurpose } from "../types";
+import { getAuthHeaders } from "./authService";
 
-export const inferContext = async (fullText: string, passphrase?: string): Promise<string> => {
+export const inferContext = async (fullText: string): Promise<string> => {
     if (!fullText.trim()) return "";
     
     // Limit text to avoid unnecessary bandwidth, though server limits too.
     const textSample = fullText.slice(0, 50000); 
 
-    const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-    };
-
-    if (passphrase) {
-        headers['Authorization'] = `Bearer ${passphrase}`;
-    }
-
     try {
         const response = await fetch('/api/context', {
             method: 'POST',
-            headers,
+            headers: getAuthHeaders(),
             body: JSON.stringify({ fullText: textSample }),
         });
 
@@ -39,23 +32,14 @@ export const generateTranslation = async (
   mode: TranslationMode,
   targetAudience?: string,
   context?: string,
-  purpose: TextPurpose = TextPurpose.INFORMATIVE,
-  passphrase?: string
+  purpose: TextPurpose = TextPurpose.INFORMATIVE
 ): Promise<string> => {
   if (!text.trim()) return "";
-
-  const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-  };
-
-  if (passphrase) {
-      headers['Authorization'] = `Bearer ${passphrase}`;
-  }
 
   try {
     const response = await fetch('/api/generate', {
         method: 'POST',
-        headers,
+        headers: getAuthHeaders(),
         body: JSON.stringify({
             text,
             mode,
@@ -78,3 +62,4 @@ export const generateTranslation = async (
     throw new Error("Failed to generate translation. Please check your connection and try again.");
   }
 };
+
