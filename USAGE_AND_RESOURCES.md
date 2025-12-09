@@ -1,51 +1,61 @@
-# LinguaFlow 使用流程与设计资源
+# LinguaFlow Production Workflow & Resources
 
-## 一、完整使用流程
+This document outlines the standard operating procedure (SOP) for high-stakes translation using LinguaFlow, detailing the inputs required and the AI resources utilized at each stage.
 
-LinguaFlow 现已支持中英双向翻译，并在翻译和润色模式下提供更灵活的体验。
+## 🟢 Workflow Overview
 
-### 1. AI Translator (AI 翻译器) 模式
-- **目的：** 快速、准确地提供原文的直译。
-- **核心功能：** 
-    - **双向翻译：** 自动检测输入文本的语言（中文或英文）。
-        - 如果输入是**中文**，则翻译为**英文**。
-        - 如果输入是**英文**，则翻译为**简体中文**。
-    - **忠实原文：** 严格保留原文含义，不添加解释或注释，仅输出译文。
-    - **上下文支持：** 您可以在“Context Panel”中上传文档，AI 会利用这些背景信息来解决歧义并确保术语的准确性。
-    - **文本目的选择 (Text Purpose)：** 根据文本的“信息型 (Informative)”、“表达型 (Expressive)”或“操作型 (Operative)”目的，优化翻译策略。
+LinguaFlow treats translation not as a single step, but as a **Verification & Reconstruction Pipeline**.
 
-- **使用场景：** 适用于需要快速理解文本大意、进行技术文档翻译、信息检索等场景。
+### Step 0: Preparation (Context)
+*   **Input**: Full Document (PDF/Text) or Global Context Description.
+*   **Action**: The system extracts a "Global Context" (Topic, Tone, Audience).
+*   **Model**: `gemini-3-pro-preview` (Reasoning Model)
+*   **Purpose**: To ground all subsequent steps in the broader document reality.
 
-### 2. AI Proofreader (AI 润色器) 模式
-- **目的：** 将直译稿件润色为地道、专业的中文或英文，使其更符合目标读者的习惯。
-- **核心功能：**
-    - **智能语言检测与润色：** 自动检测输入的草稿译文是中文还是英文。
-        - 如果是**英文草稿**，将其润色为地道、专业的**英文**。
-        - 如果是**中文草稿**，将其润色为地道、专业的**简体中文**。
-    - **目标受众 / 读者角色 (Target Audience / Reader Persona)：** 您可以选择或输入特定的目标受众（如“法律专业人士”、“商业主管”等）。AI 将模拟该受众的角色，确保润色后的文本在词汇、语调、阅读水平和文体偏好上完美契合该群体。
-    - **上下文支持：** “Context Panel”中的背景信息将帮助 AI 确定合适的语域、氛围和文体细微差别。
-    - **文本目的选择 (Text Purpose)：** 根据文本的“信息型 (Informative)”、“表达型 (Expressive)”或“操作型 (Operative)”目的，调整润色策略，以实现最佳效果。
-    - **消除“翻译腔”：** AI 会完全摆脱原始源语言的句法和结构影响，专注于目标语言的流畅性、语调和地道表达，避免出现“中式英语”或“英式中文”。
+---
 
-- **使用场景：** 适用于稿件发布前的高质量润色、文学翻译的风格调整、营销文案的本地化等对语言质量要求高的场景。
+### Step 1: Insight (Passage Contextualization)
+*   **Input**: Raw Source Passage (The text you pasted).
+*   **System Inputs**: Global Context (from Step 0), Target Audience.
+*   **Action**: The AI identifies the micro-domain, defines key terms, and flags false friends.
+*   **Model**: `gemini-3-pro-preview` (Reasoning Model)
+*   **User Role**: Review and refine the definitions.
 
-## 二、设计的外部模型资源
+---
 
-LinguaFlow 充分利用了 Google Gemini API 提供的不同模型能力，以实现“快速翻译”和“高质量润色”的平衡。
+### Step 2: Logic (Layman's Explanation)
+*   **Input**: Insight (from Step 1).
+*   **System Inputs**: Global Context, Target Audience.
+*   **Action**: The AI ignores the source structure and explains the *meaning* and *logic* in simple, linear language (The Feynman Technique).
+*   **Model**: `gemini-3-pro-preview` (Reasoning Model)
+*   **User Role**: **CRITICAL VERIFICATION**. Read the logic. Does it make sense? If the logic is wrong, the translation WILL be wrong. Edit this explanation until it is perfect.
 
-### 1. `gemini-2.5-flash-lite` (用于 AI Translator 模式)
-- **特性：** 这是一款为快速响应和高吞吐量优化的模型。
-- **在 LinguaFlow 中的作用：** 
-    - 它是“AI Translator”模式的**核心驱动**。
-    - 提供快速、准确的直译，适用于用户对速度有较高要求的场景。
-    - 能够在毫秒级内处理文本，并进行双向语言检测和翻译。
+---
 
-### 2. `gemini-2.5-pro` (用于 AI Proofreader 模式和 Context Inference)
-- **特性：** 这是一款功能更强大、推理能力更强的模型，擅长复杂的文本理解和生成任务。
-- **在 LinguaFlow 中的作用：**
-    - **AI Proofreader 模式的核心驱动：** 负责将直译稿件（无论是英文还是中文）润色为地道、专业的文本，并根据目标受众和文本目的进行细致的风格调整。
-    - **上下文推断 (Context Inference)：** 用于分析用户上传的文档，从中提取关键上下文信息，以辅助翻译和润色过程。由于上下文推断需要深度理解文本，因此选用更强大的 Pro 模型以确保高质量的上下文提取。
+### Step 3: Literal (Verified Literal Translation)
+*   **Input**: Raw Source Passage.
+*   **System Inputs**:
+    1.  **Verified Logic** (Your edited Step 2 output) - Acts as the definitive guide for meaning.
+    2.  **Global Context** - Background info.
+    3.  **Target Audience** & **Purpose**.
+*   **Action**: The AI translates the source text **literally** and **completely**. It is allowed to sound like "translationese" to ensure accuracy and completeness.
+*   **Model**: `gemini-2.5-flash-lite` (Fast Literal Model)
+*   **User Role**: Quick check for missing numbers/clauses.
 
-**总结：**
+---
 
-LinguaFlow 通过巧妙地结合 `gemini-2.5-flash-lite` 和 `gemini-2.5-pro` 这两个模型，实现了在不同使用场景下的最佳性能和效果：`flash-lite` 负责提供快速且成本效益高的直译服务，而 `pro` 则专注于需要高级语言理解和生成能力的润色和上下文推断任务，共同为用户提供高效、高质量的双向翻译和润色体验。
+### Step 4: Editor (Professional Polish)
+*   **Input**: Literal Translation (from Step 3).
+*   **System Inputs**: Global Context, Target Audience, Purpose.
+*   **Action**: The AI acts as a native expert editor. It rewrites the literal text to flow naturally and professionally, fixing the "translationese" from Step 3.
+*   **Model**: `gemini-3-pro-preview` (Reasoning Model)
+*   **User Role**: Final approval.
+
+---
+
+## 🤖 Model Resource Allocation
+
+| Stage | Resource | Justification |
+| :--- | :--- | :--- |
+| **Logic & Reasoning** | `gemini-3-pro-preview` | Used for Steps 1, 2, and 4. These require deep understanding, domain separation, and stylistic nuance. |
+| **Literal Translation** | `gemini-2.5-flash-lite` | Used for Step 3. This model is faster and tends to be more obedient/literal, which is perfect for the "Raw Accuracy" layer. |

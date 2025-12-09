@@ -16,22 +16,13 @@ Traditional AI translators often produce "Translationese"—text that is grammat
 
 ## ✨ Key Features
 
-### 1. 3-Step Passage Workflow (The "Wizard")
-Instead of a simple "Translate" button, LinguaFlow guides you through a rigorous production process for each difficult passage:
+### 1. 4-Step Passage Workflow (The "Wizard")
+Instead of a simple "Translate" button, LinguaFlow guides you through a rigorous 4-step production process for each difficult passage:
 
-*   **Step 1: Passage Insight (The Strategist)**
-    *   AI analyzes the text to define the specific micro-domain (e.g., "Central Bank Collateral").
-    *   Extracts key terms and warns of "False Friends".
-    *   *You review and refine these definitions.*
-
-*   **Step 2: Layman's Logic (The Deconstructor)**
-    *   AI acts as a "Simulated Layman" using the Feynman Technique to explain the passage's logic in simple, linear language.
-    *   **Human-in-the-Loop**: You verify this logic. If the AI misunderstood the cause-and-effect, you fix the "Layman explanation" here.
-
-*   **Step 3: Professional Reconstruction (The Blind Editor)**
-    *   **Strict Physical Isolation**: The AI *source text input is removed*.
-    *   The model reconstructs the final professional text using *only* your **Verified Logic** (from Step 2) and the **Strategic Terms** (from Step 1).
-    *   **Result**: A translation that is terminologically accurate but structurally completely decoupled from the source.
+1.  **Insight (Domain Analysis)**: AI defines the context and key terms.
+2.  **Logic (Layman's Explanation)**: AI explains the meaning simply.
+3.  **Literal (Strict Translation)**: AI translates the verify logic literally.
+4.  **Editor (Professional Polish)**: AI refines the text into native-level quality.
 
 ### 2. Global Context Injection
 *   Upload your full source document (PDF/Text) at the start.
@@ -60,8 +51,8 @@ Instead of a simple "Translate" button, LinguaFlow guides you through a rigorous
     *   Paste a difficult passage.
     *   **Verify** the Insight (Definitions).
     *   **Verify** the Logic (Simple Explanation). *Edit this if the AI is wrong!*
-    *   Receive the final **Reconstruction**.
-3.  **Polish**: Optionally use the "Polish" tool for final native-speaker refinement.
+    *   **Verify** the Literal Translation.
+    *   Receive the final **Editor** output.
 
 ## 📄 License
 Open source for educational and personal use.

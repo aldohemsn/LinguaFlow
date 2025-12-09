@@ -64,8 +64,9 @@ const TranslationArea: React.FC<TranslationAreaProps> = ({
     switch (workflowStep) {
       case 0: return "Step 1: Get Passage Insight";
       case 1: return "Step 2: Get Layman Logic";
-      case 2: return "Step 3: Final Translation";
-      case 3: return "Translation Complete";
+      case 2: return "Step 3: Literal Translation";
+      case 3: return "Step 4: Professional Editor";
+      case 4: return "Translation Complete";
       default: return "Translate";
     }
   };
@@ -75,7 +76,8 @@ const TranslationArea: React.FC<TranslationAreaProps> = ({
       case 0: return "Analyze domain and terms";
       case 1: return "Deconstruct logic (Helper)";
       case 2: return "Synthesize insights & logic";
-      case 3: return "Review final output";
+      case 3: return "Polish & Proofread";
+      case 4: return "Final Output";
       default: return "";
     }
   };
@@ -122,10 +124,10 @@ const TranslationArea: React.FC<TranslationAreaProps> = ({
 
           <button
             onClick={onTranslate}
-            disabled={isLoading || !sourceText.trim() || workflowStep === 3}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${isLoading || !sourceText.trim() || workflowStep === 3
-                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                : 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md hover:shadow-lg'
+            disabled={isLoading || !sourceText.trim() || workflowStep === 4}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${isLoading || !sourceText.trim() || workflowStep === 4
+              ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+              : 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md hover:shadow-lg'
               }`}
           >
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
@@ -147,9 +149,11 @@ const TranslationArea: React.FC<TranslationAreaProps> = ({
                   ? "Review Layman Logic (EDITABLE)"
                   : workflowStep === 0 && targetText && targetText.includes("Domain Context")
                     ? "Review Passage Insight (EDITABLE)"
-                    : "Target Text"}
+                    : workflowStep === 2
+                      ? "Review Literal Translation (EDITABLE)"
+                      : "Target Text"}
                 <span className="text-[10px] bg-green-50 text-green-600 px-1.5 py-0.5 rounded border border-green-100">
-                  {workflowStep < 3 ? "Editable Translator Aid" : "Final Output"}
+                  {workflowStep < 4 ? "Editable Translator Aid" : "Final Output"}
                 </span>
               </span>
               <div className="text-[10px] text-violet-500 font-medium mt-0.5">
@@ -183,7 +187,8 @@ const TranslationArea: React.FC<TranslationAreaProps> = ({
           <div className="flex gap-1 px-4 pb-2">
             <div className={`h-1.5 flex-1 rounded-full transition-colors ${workflowStep >= 1 ? 'bg-indigo-500' : 'bg-slate-100'}`} title="Context" />
             <div className={`h-1.5 flex-1 rounded-full transition-colors ${workflowStep >= 2 ? 'bg-violet-500' : 'bg-slate-100'}`} title="Logic" />
-            <div className={`h-1.5 flex-1 rounded-full transition-colors ${workflowStep >= 3 ? 'bg-green-500' : 'bg-slate-100'}`} title="Final" />
+            <div className={`h-1.5 flex-1 rounded-full transition-colors ${workflowStep >= 3 ? 'bg-fuchsia-500' : 'bg-slate-100'}`} title="Literal" />
+            <div className={`h-1.5 flex-1 rounded-full transition-colors ${workflowStep >= 4 ? 'bg-green-500' : 'bg-slate-100'}`} title="Final" />
           </div>
         </div>
 
@@ -198,7 +203,7 @@ const TranslationArea: React.FC<TranslationAreaProps> = ({
           />
 
           {/* Overlay hint for what to do */}
-          {!isLoading && targetText && workflowStep < 3 && (
+          {!isLoading && targetText && workflowStep < 4 && (
             <div className="absolute bottom-4 right-4 pointer-events-none opacity-50">
               <div className="bg-yellow-50 text-yellow-700 px-3 py-1 rounded text-xs border border-yellow-200 shadow-sm">
                 Review & Edit before next step
@@ -222,17 +227,10 @@ const TranslationArea: React.FC<TranslationAreaProps> = ({
             <span>Passage-Oriented Expert Workflow</span>
           </div>
 
-          <button
-            onClick={onPolish}
-            disabled={isLoading || !targetText.trim()}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${isLoading || !targetText.trim()
-              ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-              : 'bg-white text-violet-600 border border-violet-200 hover:bg-violet-50 hover:border-violet-300 shadow-sm hover:shadow'
-              }`}
-          >
-            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-            Polish / Proofread
-          </button>
+          {/* Polish button hidden effectively as it is now Step 4 */}
+          <div className="flex items-center gap-2 text-violet-400 text-[10px] ml-auto">
+            {/* <span>Passage-Oriented Expert Workflow</span> */}
+          </div>
         </div>
       </div>
 

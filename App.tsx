@@ -34,7 +34,7 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [workflowStep, setWorkflowStep] = useState(0); // 0: Idle, 1: Analyzed, 2: Deconstructed, 3: Completed
+  const [workflowStep, setWorkflowStep] = useState(0); // 0: Idle, 1: Insight, 2: Logic, 3: Literal, 4: Final Editor
   const [backgroundSummary, setBackgroundSummary] = useState('');
   const [laymanLogic, setLaymanLogic] = useState('');
 
@@ -66,7 +66,7 @@ const App: React.FC = () => {
   const handleTranslateAction = useCallback(async () => {
     if (!sourceText.trim()) return;
 
-    if (workflowStep === 3) {
+    if (workflowStep === 4) {
       // Already complete, maybe prevent re-running or reset?
       return;
     }
@@ -77,7 +77,7 @@ const App: React.FC = () => {
     try {
       if (workflowStep === 0) {
         // Step 1: Insight Mode (Contextualization)
-        const summary = await generateTranslation(sourceText, TranslationMode.BACKGROUND_SUMMARY);
+        const summary = await generateTranslation(sourceText, TranslationMode.BACKGROUND_SUMMARY, targetAudience, context);
 
         // Save raw result and display it for editing
         setBackgroundSummary(summary);
@@ -100,18 +100,34 @@ const App: React.FC = () => {
 
         setWorkflowStep(2);
       } else if (workflowStep === 2) {
-        // Step 3: Reconstruction (Final Translation)
+        // Step 3: Reconstruction (Verified Literal Translation)
         // CRITICAL: Use the *edited* targetText from Step 2 as the Logic for Step 3
         const editedLogic = targetText;
         setLaymanLogic(editedLogic);
 
-        // Combine the (potentially edited) summary and logic
-        const combinedContext = `BACKGROUND INSIGHTS:\n${backgroundSummary}\n\nVERIFIED LOGIC:\n${editedLogic}`;
+        // Combine the (potentially edited) logic and Global Context
+        // Note: Insight (backgroundSummary) is removed as it's redundant when source text is provided.
+        const combinedContext = `VERIFIED LOGIC:\n${editedLogic}\n\nGLOBAL CONTEXT:\n${context}`;
 
-        const final = await generateTranslation(sourceText, TranslationMode.RECONSTRUCT, targetAudience, combinedContext, textPurpose);
-        setTargetText(final);
+        const literalTranslation = await generateTranslation(sourceText, TranslationMode.RECONSTRUCT, targetAudience, combinedContext, textPurpose);
+        setTargetText(literalTranslation);
 
         setWorkflowStep(3);
+      } else if (workflowStep === 3) {
+        // Step 4: Professional Editor (Polish/Proofread)
+        // Use the *edited* targetText from Step 3 (Literal Translation) as the draft
+        const draftTranslation = targetText;
+
+        const finalPolished = await generateTranslation(
+          draftTranslation,
+          TranslationMode.PROOFREADER,
+          targetAudience,
+          context,
+          textPurpose
+        );
+
+        setTargetText(finalPolished);
+        setWorkflowStep(4);
       }
     } catch (err: any) {
       setError(err.message || "Workflow error");

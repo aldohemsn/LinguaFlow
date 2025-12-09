@@ -52,8 +52,8 @@ const authMiddleware = (req: express.Request, res: express.Response, next: expre
 
 // --- Gemini API Setup ---
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-const TRANSLATOR_MODEL = 'gemini-2.5-flash-lite';
-const PROOFREADER_MODEL = 'gemini-2.5-pro';
+const LITERAL_MODEL = 'gemini-2.5-flash-lite';
+const REASONING_MODEL = 'gemini-3-pro-preview';
 
 // --- Shared Constants ---
 const TextPurpose = {
@@ -180,33 +180,30 @@ A paragraph of "Layman's Logic" in the TARGET LANGUAGE.
 `;
 
 const getReconstructPrompt = (backgroundSummary: string, laymanLogic: string, targetAudience: string, purpose: string) => `
-ROLE: You are a "Blind" Expert Editor & Translator.
-TASK: "Passage Reconstruction" (Final Translation).
+ROLE: You are a "Literal Translator".
+TASK: "Verified Literal Translation".
 
 INPUTS:
-1. **Verified Logic** (The SOURCE OF TRUTH for meaning):
-   "${laymanLogic}"
-   *(This logic has been verified by a human expert. Trust it implicitly for WHAT is being said.)*
+1. **Source Text**: (Provided in the user message).
 
-2. **Context/Insights** (The SOURCE OF TRUTH for terminology):
+2. **Verified Logic & Context**:
    "${backgroundSummary}"
-   *(Use these specific terms and domain context.)*
+   *(Start with the Verified Logic to disambiguate meaning. Use Global Context for background.)*
 
 3. **Target Audience**: ${targetAudience || "Professional Readers"}
 4. **Text Purpose**: ${purpose || "Informative"}
 
 INSTRUCTIONS:
-- Write the final text in the target language.
-- **BLIND EDITOR MINDSET**: 
-  - You do NOT have access to the original source text. 
-  - You are writing this text from scratch based *only* on the "Verified Logic".
-  - **LANGUAGE RULE**: The "Verified Logic" is already written in the TARGET LANGUAGE. Your output must be in the **SAME LANGUAGE** as the "Verified Logic".
-  - Your goal is to express the "Verified Logic" with the "Context Terms" in the most natural, professional way possible.
-- **Style**: Fluent, native-level professional, aligned with the "${purpose}" purpose.
-- **Audience Adaptation**: tailoring vocabulary and tone for "${targetAudience}".
+- **GOAL**: Provide a **complete, accurate, and literal** translation of the **Source Text**.
+- **Use of Logic**: The "Verified Logic" is your safety net. Use it to ensure you understand the complex relationships in the Source Text correctly.
+- **Literalness**:
+  - Focus on faithfully representing the content and structure of the Source Text.
+  - Do NOT skip any details from the Source Text.
+  - **Translationese is ACCEPTABLE** at this stage. (The "Editor" in the next step will fix the flow).
+  - Your priority is **Accuracy** and **Completeness**.
 
 OUTPUT:
-Only the final translated text. No notes.
+Only the translated text. No notes.
 `;
 
 
@@ -233,7 +230,7 @@ app.post('/api/generate', authMiddleware, async (req, res) => {
     if (mode === TranslationMode.BACKGROUND_SUMMARY) {
       // Pass the global 'context' (if any) to help ground the summary
       const summaryResponse = await ai.models.generateContent({
-        model: PROOFREADER_MODEL,
+        model: REASONING_MODEL,
         contents: `TEXT TO ANALYZE: "${text}"`,
         config: {
           systemInstruction: getBackgroundSummaryPrompt(context),
@@ -247,7 +244,7 @@ app.post('/api/generate', authMiddleware, async (req, res) => {
     if (mode === TranslationMode.DECONSTRUCT) {
       // Here 'context' argument should hold the Background Summary
       const deconstructResponse = await ai.models.generateContent({
-        model: PROOFREADER_MODEL,
+        model: REASONING_MODEL,
         contents: `SOURCE TEXT: "${text}"`,
         config: {
           systemInstruction: getDeconstructPrompt(context || "", targetAudience),
@@ -259,12 +256,12 @@ app.post('/api/generate', authMiddleware, async (req, res) => {
     }
 
     if (mode === TranslationMode.RECONSTRUCT) {
-      // STRICT ISOLATION: Do NOT pass the source 'text' to the model.
-      // We rely entirely on the System Instruction which contains the verified logic.
+      // LITERAL MODE: Pass source 'text' to the model so it can be accurate/complete.
+      // We rely on the System Instruction (with verified logic) to guide the interpretation.
 
       const reconstructResponse = await ai.models.generateContent({
-        model: PROOFREADER_MODEL,
-        contents: `Please generate the final text based on the Verified Logic provided in the system instructions.`,
+        model: LITERAL_MODEL,
+        contents: `SOURCE TEXT:\n"${text}"\n\nPlease generate the verified literal translation.`,
         config: {
           systemInstruction: getReconstructPrompt(context || "No context", "", targetAudience, purpose),
           temperature: 0.3,
@@ -275,8 +272,9 @@ app.post('/api/generate', authMiddleware, async (req, res) => {
     }
 
     if (mode !== TranslationMode.POLISH && mode !== TranslationMode.PROOFREADER) {
+      // Default / Fallback Translator (if direct translate used)
       const translatorResponse = await ai.models.generateContent({
-        model: TRANSLATOR_MODEL,
+        model: LITERAL_MODEL,
         contents: text,
         config: {
           systemInstruction: getTranslatorSystemPrompt(context, purpose),
@@ -300,7 +298,7 @@ app.post('/api/generate', authMiddleware, async (req, res) => {
       }
 
       const proofreaderResponse = await ai.models.generateContent({
-        model: PROOFREADER_MODEL,
+        model: REASONING_MODEL,
         contents: `Here is a draft translation: "${draftText}". 
 \n
 Please rewrite this to be natural and idiomatic.`,
@@ -336,7 +334,7 @@ app.post('/api/context', authMiddleware, async (req, res) => {
 
   try {
     const response = await ai.models.generateContent({
-      model: PROOFREADER_MODEL,
+      model: REASONING_MODEL,
       contents: `Analyze the following text (which is a full document or a large excerpt). 
         Identify the core topic, the document type (e.g., technical manual, novel, legal contract), the intended audience, and the general tone. 
         Summarize this "Translation Context" in one concise paragraph (under 100 words) to help a translator understand the background.
