@@ -1,91 +1,67 @@
-# LinguaFlow
+# LinguaFlow: Passage-Oriented Professional Translation Helper
 
-LinguaFlow is a sophisticated, dual-mode Chinese-to-English translation tool powered by Google's latest Gemini AI models. It bridges the gap between raw literal understanding and professional, audience-tailored localization.
+LinguaFlow is a specialized translation environment designed for high-stakes professional translation. It replaces the traditional "literal translation -> editing" workflow with a **"Passage-Oriented, Human-in-the-Loop"** process powered by Google's Gemini AI.
 
-![App Screenshot Placeholder](https://via.placeholder.com/800x400?text=LinguaFlow+Translate+Interface)
+![App Screenshot Placeholder](https://via.placeholder.com/800x400?text=LinguaFlow+3-Step+Workflow)
 
-## ✨ Features
+## 🧠 The Core Philosophy
 
-### 1. Dual-Mode Translation Engine
-*   **⚡ Fast Translator (Gemini Flash Lite):** Delivers rapid, accurate, and literal translations. Perfect for quickly understanding the core meaning of a Chinese text without embellishment.
-*   **✍️ Pro Proofreader (Gemini Pro):** Takes the literal draft and refines it into native-level, polished English. It decouples the text from Chinese syntax to ensure a natural flow.
+Traditional AI translators often produce "Translationese"—text that is grammatically correct but structurally mimicked the source language. LinguaFlow breaks this by treating translation as a **verified reconstruction** process:
 
-### 2. Audience-Centric Polishing
-In **Proofreader Mode**, you don't just get "better English"—you get English tailored to your specific reader.
-*   **Target Audience Personas:** Define who will read your text (e.g., "Investors", "Legal Professionals", "Gen Z").
-*   **Role-Playing AI:** The AI acts as a representative of that audience to ensure the tone, vocabulary, and style resonate perfectly.
-*   **Iterative Refinement:** Click "Polish" repeatedly to generate variations or further refine the text.
+1.  **Contextualize first**: Understanding the global document domain.
+2.  **Deconstruct logic**: Smashing the source structure into simple, verified logic.
+3.  **Reconstruct blindly**: Writing the final text from the verified logic *without looking at the source*, ensuring a native flow.
 
-### 3. Contextual Awareness
-*   **Context Panel:** Provide background information (or let the AI infer it from uploaded documents) to resolve ambiguities and set the correct atmosphere.
-*   **Smart Inference:** Capable of analyzing large text samples to automatically determine the document type, tone, and intended audience.
+---
 
-### 4. Security & Access Control
-*   **Passphrase Authentication:** Protect your deployment with a simple, secure passphrase mechanism.
-*   **Secure API Handling:** All AI requests are proxied through a secure Express backend.
+## ✨ Key Features
 
-### 5. Offline Support & GFW-Friendly Access
-*   **Progressive Web App (PWA):** Utilizes Service Workers to cache essential assets, enabling fast loading and reliable offline access.
-*   **Self-Contained Resources:** All external dependencies (Google Fonts, Tailwind CDN) have been localized and bundled, ensuring the application functions stably even in regions with restricted network access (e.g., China's Great Firewall).
+### 1. 3-Step Passage Workflow (The "Wizard")
+Instead of a simple "Translate" button, LinguaFlow guides you through a rigorous production process for each difficult passage:
+
+*   **Step 1: Passage Insight (The Strategist)**
+    *   AI analyzes the text to define the specific micro-domain (e.g., "Central Bank Collateral").
+    *   Extracts key terms and warns of "False Friends".
+    *   *You review and refine these definitions.*
+
+*   **Step 2: Layman's Logic (The Deconstructor)**
+    *   AI acts as a "Simulated Layman" using the Feynman Technique to explain the passage's logic in simple, linear language.
+    *   **Human-in-the-Loop**: You verify this logic. If the AI misunderstood the cause-and-effect, you fix the "Layman explanation" here.
+
+*   **Step 3: Professional Reconstruction (The Blind Editor)**
+    *   **Strict Physical Isolation**: The AI *source text input is removed*.
+    *   The model reconstructs the final professional text using *only* your **Verified Logic** (from Step 2) and the **Strategic Terms** (from Step 1).
+    *   **Result**: A translation that is terminologically accurate but structurally completely decoupled from the source.
+
+### 2. Global Context Injection
+*   Upload your full source document (PDF/Text) at the start.
+*   The system extracts a "Global Context" (Topic, Tone, Audience) that is silently injected into every subsequent passage analysis, ensuring consistency across unconnected paragraphs.
+
+### 3. Audience & Purpose Control
+*   **Target Audience**: Define who you are writing for (e.g., "Junior Bankers", "General Public"). The "Layman Logic" step adapts to explain things at the right level.
+*   **Purpose**: choose "Informative", "Expressive", or "Operative" to control the final rhetorical strategy.
+
+### 4. Technical Resilience
+*   **Offline-First PWA**: Built to work in low-connectivity environments.
+*   **Self-Contained**: All fonts and assets are local; reliable access even in restricted networks (GFW-friendly).
+*   **Secure**: Passphrase-protected entry.
+
+---
 
 ## 🛠️ Tech Stack
+*   **Frontend:** React 19, TypeScript, Vite, Tailwind CSS
+*   **Backend:** Node.js, Express
+*   **AI Engine:** Google Gemini 2.5 (Flash Lite for Speed, Pro for Logic/Reconstruction)
 
-*   **Frontend:** [React 19](https://react.dev/) + TypeScript + [Vite](https://vitejs.dev/) + PWA (Progressive Web App)
-*   **Backend:** Node.js + [Express](https://expressjs.com/)
-*   **AI:** [Google GenAI SDK](https://www.npmjs.com/package/@google/genai)
-*   **Styling:** [Tailwind CSS](https://tailwindcss.com/) + [Lucide React](https://lucide.dev/)
+## 🚀 Usage
 
-## 🚀 Getting Started
-
-### Prerequisites
-*   Node.js (v18 or higher)
-*   npm or yarn
-*   A Google Gemini API Key
-
-### Installation
-
-1.  **Navigate to the project directory:**
-    ```bash
-    cd LinguaFlow
-    ```
-
-2.  **Install dependencies:**
-    ```bash
-    npm install
-    ```
-
-3.  **Configure Environment Variables:**
-    Create a `.env` file in the root directory:
-    ```env
-    PORT=8080
-    GEMINI_API_KEY=your_actual_api_key_here
-    PASSPHRASE=your_secure_passphrase_here
-    ```
-
-### Running the Application
-
-**Development:**
-```bash
-npm run dev
-```
-
-**Production:**
-1.  Build the frontend:
-    ```bash
-    npm run build
-    ```
-2.  Start the server:
-    ```bash
-    npm start
-    ```
-
-## 📖 Usage Guide
-
-1.  **Login:** Enter your passphrase to unlock the interface.
-2.  **Translate:** Type your Chinese text and click "Translate" for a fast, literal draft.
-3.  **Refine:** Switch to "Polish" mode, set a Target Audience (e.g., "Academic"), and click "Polish" to transform the text into professional English.
-4.  **Context:** Use the sidebar to upload a document for context analysis if your text is part of a larger work.
+1.  **Context Setup**: Upload your document or describe the global context. Set your Target Audience.
+2.  **The Loop**:
+    *   Paste a difficult passage.
+    *   **Verify** the Insight (Definitions).
+    *   **Verify** the Logic (Simple Explanation). *Edit this if the AI is wrong!*
+    *   Receive the final **Reconstruction**.
+3.  **Polish**: Optionally use the "Polish" tool for final native-speaker refinement.
 
 ## 📄 License
-
-This project is open-source and available for personal and educational use.
+Open source for educational and personal use.
