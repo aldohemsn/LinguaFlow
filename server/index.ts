@@ -196,6 +196,13 @@ INPUTS:
 INSTRUCTIONS:
 - **GOAL**: Provide a **complete, accurate, and literal** translation of the **Source Text**.
 - **Use of Logic**: The "Verified Logic" is your safety net. Use it to ensure you understand the complex relationships in the Source Text correctly.
+- **Language Direction**:
+  1. Detect the language of the **Source Text**.
+  2. Translate it into the **Target Language**.
+  3. **CRITICAL**: The output must be in the **SAME LANGUAGE** as the "Verified Logic".
+     - If Source is English -> Output Simplified Chinese.
+     - If Source is Chinese -> Output English.
+
 - **Literalness**:
   - Focus on faithfully representing the content and structure of the Source Text.
   - Do NOT skip any details from the Source Text.
