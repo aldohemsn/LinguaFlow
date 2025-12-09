@@ -166,12 +166,17 @@ ${targetAudience ? `TARGET AUDIENCE NOTE: The final translation is for "${target
 4. "Tell the story" of the passage in simple, colloquial language.
 5. If the source says "collateral haircut", you explain "the bank takes a safety margin so they don't lose money if the asset drops in value".
 
+LANGUAGE INSTRUCTION:
+1. DETECT the language of the 'Source Text'.
+2. SWITCH to the OPPOSITE language for your explanation (Target Language).
+   - If Source is English -> Explain in lucid, simple Simplified Chinese.
+   - If Source is Chinese -> Explain in lucid, simple English.
+3. CRITICAL: The explanation MUST be in the Target Language.
+
 OUTPUT FORMAT:
-A paragraph of "Layman's Logic".
-- If Source is English -> Explain in lucid, simple Simplified Chinese.
-- If Source is Chinese -> Explain in lucid, simple English.
+A paragraph of "Layman's Logic" in the TARGET LANGUAGE.
 - Use analogies if helpful.
-- **Verification Question**: End with one question to the professional: "Did I understand [Complex Concept] correctly?"
+- **Verification Question**: End with one question to the professional (in the Target Language): "Did I understand [Complex Concept] correctly?"
 `;
 
 const getReconstructPrompt = (backgroundSummary: string, laymanLogic: string, targetAudience: string, purpose: string) => `
@@ -195,6 +200,7 @@ INSTRUCTIONS:
 - **BLIND EDITOR MINDSET**: 
   - You do NOT have access to the original source text. 
   - You are writing this text from scratch based *only* on the "Verified Logic".
+  - **LANGUAGE RULE**: The "Verified Logic" is already written in the TARGET LANGUAGE. Your output must be in the **SAME LANGUAGE** as the "Verified Logic".
   - Your goal is to express the "Verified Logic" with the "Context Terms" in the most natural, professional way possible.
 - **Style**: Fluent, native-level professional, aligned with the "${purpose}" purpose.
 - **Audience Adaptation**: tailoring vocabulary and tone for "${targetAudience}".
