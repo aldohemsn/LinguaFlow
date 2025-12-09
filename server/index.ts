@@ -1,3 +1,4 @@
+
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -64,7 +65,10 @@ const TextPurpose = {
 const TranslationMode = {
   TRANSLATOR: 'TRANSLATOR',
   PROOFREADER: 'PROOFREADER',
-  POLISH: 'POLISH'
+  POLISH: 'POLISH',
+  BACKGROUND_SUMMARY: 'BACKGROUND_SUMMARY',
+  DECONSTRUCT: 'DECONSTRUCT',
+  RECONSTRUCT: 'RECONSTRUCT'
 };
 
 // --- Helper Functions ---
@@ -100,11 +104,11 @@ Do not add explanations or notes. Just output the translated text.
 `;
 
 const getProofreaderSystemPrompt = (targetAudience: string, context: string, purpose: string) => {
-  const audienceInstruction = targetAudience 
+  const audienceInstruction = targetAudience
     ? `ROLE: You are a representative of the target audience: "${targetAudience}". 
 You are NOT just a translator or editor; you are a member of this audience group.
 You are to ensure the text resonates perfectly with you and your peers.
-Adopt the exact expectations, vocabulary, reading level, and stylistic preferences typical of "${targetAudience}".` 
+Adopt the exact expectations, vocabulary, reading level, and stylistic preferences typical of "${targetAudience}".`
     : "ROLE: You are a world-class editor acting on behalf of general professional readers.";
 
   return `
@@ -123,13 +127,81 @@ The input is a draft translation.
 2. If English: Refine it to be native-level English.
 3. If Chinese: Refine it to be native-level Simplified Chinese.
 
-You must completely decouple yourself from any underlying syntax or structure of the original source language that might remain in the draft.
-Focus exclusively on flow, tone, and idiomatic expression suitable for your role and the text's purpose.
-Avoid "translationese" at all costs.
-If the text is informal, keep it natural. If it's formal, make it polished.
-Do not add explanations or notes. Just output the refined text.
+**CRITICAL: BLIND EDITOR MODE**
+- You must conceptually "blind" yourself to the source language structure. 
+- Do NOT look for "equivalence" in sentence structure. Look for "equivalence" in impact and logic.
+- If a sentence feels "translated" (translationese), REWRITE it completely.
+- Focus exclusively on flow, tone, and idiomatic expression suitable for your role and the text's purpose.
+- Do not add explanations or notes. Just output the refined text.
 `;
 };
+
+// --- New Prompts for Professional Workflow ---
+
+const getBackgroundSummaryPrompt = (globalContext?: string) => `
+ROLE: You are a Senior Language Strategist & Domain Expert.
+TASK: "Passage Contextualization" (Insight Mode).
+${globalContext ? `GLOBAL DOCUMENT CONTEXT: "${globalContext}"\n(Use this to understand the broader domain, but focus your analysis on the specific PASSAGE below.)` : ""}
+1. Read the provided text (Passage).
+2. Identify the specific micro-domain (e.g., "Central Bank Collateral Frameworks" rather than just "Finance").
+3. Define 3-5 Key Terms found in the text that are critical for accurate translation.
+4. Flag any "False Friends" or potential ambiguity pitfalls.
+
+OUTPUT FORMAT:
+Provide a structured "Passage Insight" note.
+- **Domain Context**: [1 sentence]
+- **Key Definitions**: [Term]: [Definition in Context]
+- **Pitfalls**: [Warning]
+Keep it concise and actionable for a professional translator.
+`;
+
+const getDeconstructPrompt = (backgroundSummary: string, targetAudience?: string) => `
+ROLE: You are the "Layman in the Loop" (Simulated Smart Non-Expert).
+TASK: "Deep Deconstruction" (The Feynman Technique).
+CONTEXT: ${backgroundSummary}
+${targetAudience ? `TARGET AUDIENCE NOTE: The final translation is for "${targetAudience}", so the logic must be clear enough to eventually support that level of communication, but right now, explain it to ME (the Layman) simply.` : ""}
+1. You are reading a complex professional text.
+2. Your job is to explain what it *means* to a complete outsider (e.g., a grandmother or a high school student).
+3. Do NOT translate word-for-word. Smash the sentence structures. Extract the LOGIC.
+4. "Tell the story" of the passage in simple, colloquial language.
+5. If the source says "collateral haircut", you explain "the bank takes a safety margin so they don't lose money if the asset drops in value".
+
+OUTPUT FORMAT:
+A paragraph of "Layman's Logic".
+- If Source is English -> Explain in lucid, simple Simplified Chinese.
+- If Source is Chinese -> Explain in lucid, simple English.
+- Use analogies if helpful.
+- **Verification Question**: End with one question to the professional: "Did I understand [Complex Concept] correctly?"
+`;
+
+const getReconstructPrompt = (backgroundSummary: string, laymanLogic: string, targetAudience: string, purpose: string) => `
+ROLE: You are a "Blind" Expert Editor & Translator.
+TASK: "Passage Reconstruction" (Final Translation).
+
+INPUTS:
+1. **Verified Logic** (The SOURCE OF TRUTH for meaning):
+   "${laymanLogic}"
+   *(This logic has been verified by a human expert. Trust it implicitly for WHAT is being said.)*
+
+2. **Context/Insights** (The SOURCE OF TRUTH for terminology):
+   "${backgroundSummary}"
+   *(Use these specific terms and domain context.)*
+
+3. **Target Audience**: ${targetAudience || "Professional Readers"}
+4. **Text Purpose**: ${purpose || "Informative"}
+
+INSTRUCTIONS:
+- Write the final text in the target language.
+- **BLIND EDITOR MINDSET**: 
+  - You do NOT have access to the original source text. 
+  - You are writing this text from scratch based *only* on the "Verified Logic".
+  - Your goal is to express the "Verified Logic" with the "Context Terms" in the most natural, professional way possible.
+- **Style**: Fluent, native-level professional, aligned with the "${purpose}" purpose.
+- **Audience Adaptation**: tailoring vocabulary and tone for "${targetAudience}".
+
+OUTPUT:
+Only the final translated text. No notes.
+`;
 
 
 // --- API Routes ---
@@ -151,45 +223,89 @@ app.post('/api/generate', authMiddleware, async (req, res) => {
   try {
     let draftText = text;
 
-    // Step 1: Generate Literal Translation (Flash Lite) - Only if NOT in POLISH mode
-    if (mode !== TranslationMode.POLISH) {
-        const translatorResponse = await ai.models.generateContent({
+    // Step 1: Insight Mode (Contextualization)
+    if (mode === TranslationMode.BACKGROUND_SUMMARY) {
+      // Pass the global 'context' (if any) to help ground the summary
+      const summaryResponse = await ai.models.generateContent({
+        model: PROOFREADER_MODEL,
+        contents: `TEXT TO ANALYZE: "${text}"`,
+        config: {
+          systemInstruction: getBackgroundSummaryPrompt(context),
+          temperature: 0.3,
+        }
+      });
+      res.status(200).json({ result: summaryResponse.text || "" });
+      return;
+    }
+
+    if (mode === TranslationMode.DECONSTRUCT) {
+      // Here 'context' argument should hold the Background Summary
+      const deconstructResponse = await ai.models.generateContent({
+        model: PROOFREADER_MODEL,
+        contents: `SOURCE TEXT: "${text}"`,
+        config: {
+          systemInstruction: getDeconstructPrompt(context || "", targetAudience),
+          temperature: 0.4,
+        }
+      });
+      res.status(200).json({ result: deconstructResponse.text || "" });
+      return;
+    }
+
+    if (mode === TranslationMode.RECONSTRUCT) {
+      // STRICT ISOLATION: Do NOT pass the source 'text' to the model.
+      // We rely entirely on the System Instruction which contains the verified logic.
+
+      const reconstructResponse = await ai.models.generateContent({
+        model: PROOFREADER_MODEL,
+        contents: `Please generate the final text based on the Verified Logic provided in the system instructions.`,
+        config: {
+          systemInstruction: getReconstructPrompt(context || "No context", "", targetAudience, purpose),
+          temperature: 0.3,
+        }
+      });
+      res.status(200).json({ result: reconstructResponse.text || "" });
+      return;
+    }
+
+    if (mode !== TranslationMode.POLISH && mode !== TranslationMode.PROOFREADER) {
+      const translatorResponse = await ai.models.generateContent({
         model: TRANSLATOR_MODEL,
         contents: text,
         config: {
-            systemInstruction: getTranslatorSystemPrompt(context, purpose),
-            temperature: 0.3,
+          systemInstruction: getTranslatorSystemPrompt(context, purpose),
+          temperature: 0.3,
         }
-        });
-        draftText = translatorResponse.text || "";
+      });
+      draftText = translatorResponse.text || "";
     }
 
     // If mode is TRANSLATOR, we are done
     if (mode === TranslationMode.TRANSLATOR) {
-        res.status(200).json({ result: draftText });
-        return;
+      res.status(200).json({ result: draftText });
+      return;
     }
 
     // Step 2: Proofreading (Pro) - For PROOFREADER and POLISH modes
     if (mode === TranslationMode.PROOFREADER || mode === TranslationMode.POLISH) {
-        if (!draftText.trim()) {
-            res.status(200).json({ result: "" });
-            return;
-        }
-
-        const proofreaderResponse = await ai.models.generateContent({
-            model: PROOFREADER_MODEL,
-            contents: `Here is a draft translation: "${draftText}". 
-
-Please rewrite this to be natural and idiomatic.`, 
-            config: {
-                systemInstruction: getProofreaderSystemPrompt(targetAudience, context, purpose),
-                temperature: 0.7,
-            }
-        });
-        
-        res.status(200).json({ result: proofreaderResponse.text || "" });
+      if (!draftText.trim()) {
+        res.status(200).json({ result: "" });
         return;
+      }
+
+      const proofreaderResponse = await ai.models.generateContent({
+        model: PROOFREADER_MODEL,
+        contents: `Here is a draft translation: "${draftText}". 
+\n
+Please rewrite this to be natural and idiomatic.`,
+        config: {
+          systemInstruction: getProofreaderSystemPrompt(targetAudience, context, purpose),
+          temperature: 0.7,
+        }
+      });
+
+      res.status(200).json({ result: proofreaderResponse.text || "" });
+      return;
     }
 
     res.status(400).json({ message: 'Invalid mode' });
@@ -205,7 +321,7 @@ app.post('/api/context', authMiddleware, async (req, res) => {
   const { fullText } = req.body;
 
   if (!fullText) {
-     // Allow empty context if text is empty
+    // Allow empty context if text is empty
     res.status(200).json({ context: "" });
     return;
   }
@@ -214,16 +330,16 @@ app.post('/api/context', authMiddleware, async (req, res) => {
 
   try {
     const response = await ai.models.generateContent({
-        model: PROOFREADER_MODEL,
-        contents: `Analyze the following text (which is a full document or a large excerpt). 
+      model: PROOFREADER_MODEL,
+      contents: `Analyze the following text (which is a full document or a large excerpt). 
         Identify the core topic, the document type (e.g., technical manual, novel, legal contract), the intended audience, and the general tone. 
         Summarize this "Translation Context" in one concise paragraph (under 100 words) to help a translator understand the background.
         
         Text:
         "${textSample}"`,
-        config: {
-            temperature: 0.5,
-        }
+      config: {
+        temperature: 0.5,
+      }
     });
 
     res.status(200).json({ context: response.text || "" });
